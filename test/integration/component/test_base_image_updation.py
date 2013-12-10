@@ -281,6 +281,7 @@ class TestBaseImageUpdate(cloudstackTestCase):
 
         return
 
+    @attr(tags=["advanced", "basic"])
     def test_01_deploy_instance_with_is_volatile_offering(self):
         """ Test deploy an instance with service offerings with IsVolatile set.
         """
@@ -311,6 +312,7 @@ class TestBaseImageUpdate(cloudstackTestCase):
                              )
         return
 
+    @attr(tags=["advanced", "basic"])
     def test_02_reboot_instance_with_is_volatile_offering(self):
         """ Test rebooting instances created with isVolatile service offerings
         """
@@ -388,6 +390,7 @@ class TestBaseImageUpdate(cloudstackTestCase):
 
         return
 
+    @attr(tags=["advanced", "basic"])
     def test_03_restore_vm_with_new_template(self):
         """ Test restoring a vm with different template than the one it was created with
         """
@@ -503,6 +506,7 @@ class TestBaseImageUpdate(cloudstackTestCase):
 
 	    return
 
+    @attr(tags=["advanced", "basic"])
     def test_04_reoccuring_snapshot_rules(self):
         """
         1) Create a VM using the Service offering IsVolatile enabled
@@ -530,14 +534,8 @@ class TestBaseImageUpdate(cloudstackTestCase):
                                             vm_with_reset.rootdeviceid
                                         )
 
-        now = datetime.now()
-        delta = timedelta(minutes=15)
-        scheduled_time = now + delta
-
-        self.services["recurring_snapshot"]["schedule"] = scheduled_time.minute
-
         self.debug("Creating recurring snapshot policy for root disk on vm created with IsVolatile=True")
-        self.debug("Snapshot Policy - Type : %s Scheduled minute : %s" %(
+        self.debug("Snapshot Policy - Type : %s Scheduled Hours : %s" %(
             self.services["recurring_snapshot"]["intervaltype"],
             self.services["recurring_snapshot"]["schedule"]))
 
@@ -571,7 +569,7 @@ class TestBaseImageUpdate(cloudstackTestCase):
                         self.services["recurring_snapshot"]["maxsnaps"],
                         "Check interval type in list resources call"
                         )
-        sleep_seconds = delta.seconds + 600
+        sleep_seconds = (self.services["recurring_snapshot"]["schedule"]) * 3600 + 600
         sleep_minutes = sleep_seconds/60
         self.debug("Sleeping for %s minutes till the volume is snapshoted" %sleep_minutes)
         time.sleep(sleep_seconds)

@@ -370,6 +370,12 @@
                                     }
                                 }
 
+                                if (needsRefresh) {
+                                    if (!$listView.closest('.detail-view').size()) {
+                                        $loading.remove();
+                                    }
+                                }
+
                                 if (options.error) options.error(message);
 
                                 if (message) cloudStack.dialog.notice({
@@ -1330,8 +1336,23 @@
                         var itemID = $tr.data('list-view-item-id');
                         var jsonObj = $tr.data('json-obj');
                         var $loading = $('<div>').addClass('loading-overlay').appendTo($detailsContainer);
+                        var listViewArgs = $listView.data('view-args');
+                        var listViewActiveSection = activeSection;
+                        var targetSection;
 
                         if ($tr.hasClass('loading')) return;
+
+                        if (listViewActiveSection != '_zone') {
+                            if (listViewArgs.sections &&
+                                listViewArgs.sections[listViewActiveSection] &&
+                                listViewArgs.sections[listViewActiveSection].id) {
+                                targetSection = listViewArgs.sections[listViewActiveSection].id;
+                            } else {
+                                targetSection = listViewActiveSection;
+                            }
+                        } else {
+                            targetSection = detailViewArgs.section;
+                        }
 
                         // Title
                         $title.append(
@@ -1352,7 +1373,7 @@
                             if (!$quickViewTooltip.is(':visible')) return;
 
                             // Init detail view
-                            context[activeSection] = [jsonObj];
+                            context[targetSection] = [jsonObj];
                             createDetailView({
                                     data: $.extend(true, {}, detailView, {
                                         onLoad: function($detailView) {
@@ -1998,13 +2019,24 @@
 
                 var listViewArgs = $listView.data('view-args');
 
+                var targetSection;
+
                 detailViewArgs.section = listViewArgs.activeSection ?
                     listViewArgs.activeSection : listViewArgs.id;
 
-                detailViewArgs.context[
-                    listViewActiveSection != '_zone' ?
-                    listViewActiveSection : detailViewArgs.section
-                ] = [jsonObj];
+                if (listViewActiveSection != '_zone') {
+                    if (listViewArgs.sections &&
+                        listViewArgs.sections[listViewActiveSection] &&
+                        listViewArgs.sections[listViewActiveSection].id) {
+                        targetSection = listViewArgs.sections[listViewActiveSection].id;
+                    } else {
+                        targetSection = listViewActiveSection;
+                    }
+                } else {
+                    targetSection = detailViewArgs.section;
+                }
+
+                detailViewArgs.context[targetSection] = [jsonObj];
 
                 if ($.isFunction(detailViewArgs.data)) {
                     detailViewArgs.data = detailViewArgs.data({

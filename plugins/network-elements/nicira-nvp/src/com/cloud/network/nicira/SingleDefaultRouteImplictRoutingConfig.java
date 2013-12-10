@@ -5,7 +5,7 @@
 // to you under the Apache License, Version 2.0 (the
 // "License"); you may not use this file except in compliance
 // with the License.  You may obtain a copy of the License at
-// 
+//
 //   http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing,
@@ -17,22 +17,21 @@
 package com.cloud.network.nicira;
 
 /**
- * 
+ *
  */
 public class SingleDefaultRouteImplictRoutingConfig extends RoutingConfig {
-	public RouterNextHop default_route_next_hop;
-	public String type = "SingleDefaultRouteImplicitRoutingConfig";
-	
-	public SingleDefaultRouteImplictRoutingConfig(RouterNextHop routerNextHop) {
-		default_route_next_hop = routerNextHop;
-	}
-	
-	public RouterNextHop getDefaultRouteNextHop() {
-		return default_route_next_hop;
-	}
-	
-	public void setDefaultRouteNextHop(RouterNextHop default_route_next_hop) {
-		this.default_route_next_hop = default_route_next_hop;
-	}
-	
+    public RouterNextHop defaultRouteNextHop;
+    public String type = "SingleDefaultRouteImplicitRoutingConfig";
+
+    public SingleDefaultRouteImplictRoutingConfig(RouterNextHop routerNextHop) {
+        defaultRouteNextHop = routerNextHop;
+    }
+
+    public RouterNextHop getDefaultRouteNextHop() {
+        return defaultRouteNextHop;
+    }
+
+    public void setDefaultRouteNextHop(RouterNextHop defaultRouteNextHop) {
+        this.defaultRouteNextHop = defaultRouteNextHop;
+    }
 }

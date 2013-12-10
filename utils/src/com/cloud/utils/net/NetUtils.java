@@ -38,6 +38,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.net.util.SubnetUtils;
 import org.apache.log4j.Logger;
 
 import com.googlecode.ipv6.IPv6Address;
@@ -46,12 +47,12 @@ import com.googlecode.ipv6.IPv6Network;
 
 import com.cloud.utils.IteratorUtil;
 import com.cloud.utils.Pair;
-import org.apache.commons.net.util.SubnetUtils;
 import com.cloud.utils.script.Script;
 
 public class NetUtils {
     protected final static Logger s_logger = Logger.getLogger(NetUtils.class);
     public final static String HTTP_PORT = "80";
+    public final static String HTTPS_PORT = "443";
     public final static int VPN_PORT = 500;
     public final static int VPN_NATT_PORT = 4500;
     public final static int VPN_L2TP_PORT = 1701;
@@ -61,6 +62,8 @@ public class NetUtils {
     public final static String ANY_PROTO = "any";
     public final static String ICMP_PROTO = "icmp";
     public final static String ALL_PROTO = "all";
+    public final static String HTTP_PROTO = "http";
+    public final static String SSL_PROTO = "ssl";
 
     public final static String ALL_CIDRS = "0.0.0.0/0";
     public final static int PORT_RANGE_MIN = 0;
@@ -165,8 +168,7 @@ public class NetUtils {
             Pattern pattern = Pattern.compile("\\s*0.0.0.0\\s*0.0.0.0\\s*(\\S*)\\s*(\\S*)\\s*");
             try {
                 Process result = Runtime.getRuntime().exec("route print -4");
-                BufferedReader output = new BufferedReader
-                        (new InputStreamReader(result.getInputStream()));
+                BufferedReader output = new BufferedReader(new InputStreamReader(result.getInputStream()));
 
                 String line = output.readLine();
                 while (line != null) {
@@ -456,8 +458,7 @@ public class NetUtils {
         StringBuilder result = new StringBuilder(17);
         Formatter formatter = new Formatter(result);
         formatter.format("%02x:%02x:%02x:%02x:%02x:%02x", (macAddress >> 40) & 0xff, (macAddress >> 32) & 0xff, (macAddress >> 24) & 0xff, (macAddress >> 16) & 0xff,
-                (macAddress >> 8) & 0xff,
-                (macAddress & 0xff));
+            (macAddress >> 8) & 0xff, (macAddress & 0xff));
 
         return result.toString();
     }
@@ -664,7 +665,7 @@ public class NetUtils {
     /**
      * Given a cidr, this method returns an ip address within the range but
      * is not in the avoid list.
-     * 
+     *
      * @param startIp ip that the cidr starts with
      * @param size size of the cidr
      * @param avoid set of ips to avoid
@@ -677,9 +678,9 @@ public class NetUtils {
 
     /**
      * Given a cidr, this method returns an ip address within the range but
-     * is not in the avoid list. 
+     * is not in the avoid list.
      * Note: the gateway address has to be specified in the avoid list
-     * 
+     *
      * @param cidr ip that the cidr starts with
      * @param size size of the cidr
      * @param avoid set of ips to avoid
@@ -803,11 +804,7 @@ public class NetUtils {
     }
 
     public static enum supersetOrSubset {
-        isSuperset,
-        isSubset,
-        neitherSubetNorSuperset,
-        sameSubnet,
-        errorInCidrFormat
+        isSuperset, isSubset, neitherSubetNorSuperset, sameSubnet, errorInCidrFormat
     }
 
     public static supersetOrSubset isNetowrkASubsetOrSupersetOfNetworkB(String cidrA, String cidrB) {
@@ -820,8 +817,7 @@ public class NetUtils {
         }
         if (cidrALong[1] >= cidrBLong[1]) {
             shift = 32 - cidrBLong[1];
-        }
-        else {
+        } else {
             shift = 32 - cidrALong[1];
         }
         long result = (cidrALong[0] >> shift) - (cidrBLong[0] >> shift);
@@ -829,8 +825,7 @@ public class NetUtils {
             if (cidrALong[1] < cidrBLong[1]) {
                 //this implies cidrA is super set of cidrB
                 return supersetOrSubset.isSuperset;
-            }
-            else if (cidrALong[1] == cidrBLong[1]) {
+            } else if (cidrALong[1] == cidrBLong[1]) {
                 //this implies both the cidrs are equal
                 return supersetOrSubset.sameSubnet;
             }
@@ -1387,7 +1382,7 @@ public class NetUtils {
     // Attention maintainers: these pvlan functions should take into account code
     // in Networks.BroadcastDomainType, where URI construction is done for other
     // types of BroadcastDomainTypes
-	public static URI generateUriForPvlan(String primaryVlan, String isolatedPvlan) {
+    public static URI generateUriForPvlan(String primaryVlan, String isolatedPvlan) {
         return URI.create("pvlan://" + primaryVlan + "-i" + isolatedPvlan);
     }
 
@@ -1432,4 +1427,26 @@ public class NetUtils {
         SubnetUtils subnetUtils = new SubnetUtils(cidr);
         return subnetUtils.getInfo().isInRange(ipAddress);
     }
+
+    public static Boolean IsIpEqualToNetworkOrBroadCastIp(String requestedIp, String cidr, long size) {
+        assert (size < 32) : "You do know this is not for ipv6 right?  Keep it smaller than 32 but you have " + size;
+
+        long ip = ip2Long(cidr);
+        long startNetMask = ip2Long(getCidrNetmask(size));
+
+        long start = (ip & startNetMask);
+        long end = start;
+
+        end = end >> (32 - size);
+
+        end++;
+        end = (end << (32 - size)) - 1;
+
+        long reqIp = ip2Long(requestedIp);
+        if (reqIp == start || reqIp == end) {
+            return true;
+        }
+        return false;
+    }
+
 }

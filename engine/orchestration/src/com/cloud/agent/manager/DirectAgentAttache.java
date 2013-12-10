@@ -21,8 +21,9 @@ import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.cloudstack.managed.context.ManagedContextRunnable;
 import org.apache.log4j.Logger;
+
+import org.apache.cloudstack.managed.context.ManagedContextRunnable;
 
 import com.cloud.agent.api.Answer;
 import com.cloud.agent.api.Command;
@@ -60,8 +61,8 @@ public class DirectAgentAttache extends AgentAttache {
             future.cancel(false);
         }
 
-        synchronized(this) {
-            if( _resource != null ) {
+        synchronized (this) {
+            if (_resource != null) {
                 _resource.disconnected();
                 _resource = null;
             }
@@ -108,7 +109,7 @@ public class DirectAgentAttache extends AgentAttache {
         if (answers != null && answers[0] instanceof StartupAnswer) {
             StartupAnswer startup = (StartupAnswer)answers[0];
             int interval = startup.getPingInterval();
-            s_logger.info("StartupAnswer received " + startup.getHostId() + " Interval = " + interval );
+            s_logger.info("StartupAnswer received " + startup.getHostId() + " Interval = " + interval);
             _futures.add(_agentMgr.getDirectAgentPool().scheduleAtFixedRate(new PingTask(), interval, interval, TimeUnit.SECONDS));
         }
     }
@@ -132,6 +133,12 @@ public class DirectAgentAttache extends AgentAttache {
         @Override
         protected synchronized void runInContext() {
             try {
+                if (_outstandingTaskCount.incrementAndGet() > _agentMgr.getDirectAgentThreadCap()) {
+                    s_logger.warn("Task execution for direct attache(" + _id + ") has reached maximum outstanding limit(" + _agentMgr.getDirectAgentThreadCap() +
+                        "), bailing out");
+                    return;
+                }
+
                 ServerResource resource = _resource;
 
                 if (resource != null) {
@@ -150,16 +157,17 @@ public class DirectAgentAttache extends AgentAttache {
                         s_logger.trace("SeqA " + _id + "-" + seq + ": " + new Request(_id, -1, cmd, false).toString());
                     }
 
-                    _mgr.handleCommands(DirectAgentAttache.this, seq, new Command[]{cmd});
+                    _mgr.handleCommands(DirectAgentAttache.this, seq, new Command[] {cmd});
                 } else {
                     s_logger.debug("Unable to send ping because agent is disconnected " + _id + "(" + _name + ")");
                 }
             } catch (Exception e) {
                 s_logger.warn("Unable to complete the ping task", e);
+            } finally {
+                _outstandingTaskCount.decrementAndGet();
             }
         }
     }
-
 
     protected class Task extends ManagedContextRunnable {
         Request _req;
@@ -168,10 +176,33 @@ public class DirectAgentAttache extends AgentAttache {
             _req = req;
         }
 
+        private void bailout() {
+            long seq = _req.getSequence();
+            try {
+                Command[] cmds = _req.getCommands();
+                ArrayList<Answer> answers = new ArrayList<Answer>(cmds.length);
+                for (Command cmd : cmds) {
+                    Answer answer = new Answer(cmd, false, "Bailed out as maximum oustanding task limit reached");
+                    answers.add(answer);
+                }
+                Response resp = new Response(_req, answers.toArray(new Answer[answers.size()]));
+                processAnswers(seq, resp);
+            } catch (Exception e) {
+                s_logger.warn(log(seq, "Exception caught in bailout "), e);
+            }
+        }
+
         @Override
         protected void runInContext() {
             long seq = _req.getSequence();
             try {
+                if (_outstandingTaskCount.incrementAndGet() > _agentMgr.getDirectAgentThreadCap()) {
+                    s_logger.warn("Task execution for direct attache(" + _id + ") has reached maximum outstanding limit(" + _agentMgr.getDirectAgentThreadCap() +
+                        "), bailing out");
+                    bailout();
+                    return;
+                }
+
                 ServerResource resource = _resource;
                 Command[] cmds = _req.getCommands();
                 boolean stopOnError = _req.stopOnError();
@@ -185,8 +216,8 @@ public class DirectAgentAttache extends AgentAttache {
                     try {
                         if (resource != null) {
                             answer = resource.executeRequest(cmds[i]);
-                            if(answer == null) {
-                            	s_logger.warn("Resource returned null answer!");
+                            if (answer == null) {
+                                s_logger.warn("Resource returned null answer!");
                                 answer = new Answer(cmds[i], false, "Resource returned null answer");
                             }
                         } else {
@@ -213,6 +244,8 @@ public class DirectAgentAttache extends AgentAttache {
                 processAnswers(seq, resp);
             } catch (Exception e) {
                 s_logger.warn(log(seq, "Exception caught "), e);
+            } finally {
+                _outstandingTaskCount.decrementAndGet();
             }
         }
     }

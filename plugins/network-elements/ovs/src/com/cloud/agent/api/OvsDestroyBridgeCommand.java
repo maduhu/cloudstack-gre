@@ -41,5 +41,4 @@ public class OvsDestroyBridgeCommand extends Command {
 	public boolean executeInSequence() {
 		return true;
 	}
-
 }

@@ -17,7 +17,7 @@
   <parent>
     <groupId>org.apache.cloudstack</groupId>
     <artifactId>cloudstack</artifactId>
-    <version>4.3.0-SNAPSHOT</version>
+    <version>4.4.0-SNAPSHOT</version>
   </parent>
 
   <build>
@@ -40,9 +40,11 @@
     <module>event-bus/rabbitmq</module>
     <module>hypervisors/baremetal</module>
     <module>hypervisors/ucs</module>
+    <module>hypervisors/hyperv</module>
     <module>network-elements/elastic-loadbalancer</module>
     <module>network-elements/ovs</module>
     <module>network-elements/juniper-contrail</module>
+    <module>network-elements/palo-alto</module>
     <module>network-elements/nicira-nvp</module>
     <module>network-elements/bigswitch-vns</module>
     <module>network-elements/midonet</module>

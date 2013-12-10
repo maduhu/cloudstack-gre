@@ -19,6 +19,8 @@ package org.apache.cloudstack.network.contrail.management;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 
@@ -39,7 +41,7 @@ import com.cloud.utils.PropertiesUtil;
 
 /**
  * ManagementNetworkGuru
- * 
+ *
  * Replace the default management network strategy (PodBasedNetworkGuru) by using a Isolated network for management
  * traffic.
  */
@@ -60,12 +62,29 @@ public class ManagementNetworkGuru extends ContrailGuru {
     @Override
     public boolean configure(String name, Map<String, Object> params) throws ConfigurationException {
         File configFile = PropertiesUtil.findConfigFile(configuration);
+        FileInputStream inputFile = null;
+
+        try {
+            if (null == configFile) {
+                throw new FileNotFoundException("Configuration file was not found!");
+            }
+            inputFile = new FileInputStream(configFile);
+        } catch (FileNotFoundException e) {
+            s_logger.error(e.getMessage());
+            throw new ConfigurationException(e.getMessage());
+        }
+
         final Properties configProps = new Properties();
         try {
-            configProps.load(new FileInputStream(configFile));
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            throw new ConfigurationException(ex.getMessage());
+            configProps.load(inputFile);
+        } catch (IOException e) {
+            s_logger.error(e.getMessage());
+            throw new ConfigurationException(e.getMessage());
+        } finally {
+            try {
+                inputFile.close();
+            } catch (IOException e) {
+            }
         }
         _mgmt_cidr = configProps.getProperty("management.cidr");
         _mgmt_gateway = configProps.getProperty("management.gateway");
@@ -94,20 +113,19 @@ public class ManagementNetworkGuru extends ContrailGuru {
     }
 
     @Override
-    public Network design(NetworkOffering offering, DeploymentPlan plan,
-            Network userSpecified, Account owner) {
-        
+    public Network design(NetworkOffering offering, DeploymentPlan plan, Network userSpecified, Account owner) {
+
         if (!canHandle(offering)) {
             return null;
         }
-        NetworkVO network = new NetworkVO(offering.getTrafficType(), Mode.Dhcp, BroadcastDomainType.Lswitch,
-                offering.getId(), Network.State.Allocated, plan.getDataCenterId(), plan.getPhysicalNetworkId());
+        NetworkVO network =
+                new NetworkVO(offering.getTrafficType(), Mode.Dhcp, BroadcastDomainType.Lswitch, offering.getId(), Network.State.Allocated, plan.getDataCenterId(),
+                        plan.getPhysicalNetworkId());
         if (_mgmt_cidr != null) {
             network.setCidr(_mgmt_cidr);
             network.setGateway(_mgmt_gateway);
         }
-        s_logger.debug("Allocated network " + userSpecified.getName() +
-                (network.getCidr() == null ? "" : " subnet: " + network.getCidr()));
+        s_logger.debug("Allocated network " + userSpecified.getName() + (network.getCidr() == null ? "" : " subnet: " + network.getCidr()));
         return network;
     }
 

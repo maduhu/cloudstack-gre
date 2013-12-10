@@ -67,9 +67,10 @@ import com.cloud.storage.upload.UploadListener;
 import com.cloud.template.VirtualMachineTemplate;
 import com.cloud.utils.component.ComponentContext;
 import com.cloud.utils.component.ManagerBase;
+import com.cloud.utils.exception.CloudRuntimeException;
 
 @Component
-@Local(value = { DownloadMonitor.class })
+@Local(value = {DownloadMonitor.class})
 public class DownloadMonitorImpl extends ManagerBase implements DownloadMonitor {
     static final Logger s_logger = Logger.getLogger(DownloadMonitorImpl.class);
 
@@ -105,7 +106,7 @@ public class DownloadMonitorImpl extends ManagerBase implements DownloadMonitor 
 
     @Override
     public boolean configure(String name, Map<String, Object> params) {
-        final Map<String, String> configs = _configDao.getConfiguration("ManagementServer", params);
+        final Map<String, String> configs = _configDao.getConfiguration("management-server", params);
         _sslCopy = Boolean.parseBoolean(configs.get("secstorage.encrypt.copy"));
         _proxy = configs.get(Config.SecStorageProxy.key());
 
@@ -135,8 +136,8 @@ public class DownloadMonitorImpl extends ManagerBase implements DownloadMonitor 
     }
 
     public boolean isTemplateUpdateable(Long templateId, Long storeId) {
-        List<TemplateDataStoreVO> downloadsInProgress = _vmTemplateStoreDao.listByTemplateStoreDownloadStatus(templateId, storeId,
-                Status.DOWNLOAD_IN_PROGRESS, Status.DOWNLOADED);
+        List<TemplateDataStoreVO> downloadsInProgress =
+            _vmTemplateStoreDao.listByTemplateStoreDownloadStatus(templateId, storeId, Status.DOWNLOAD_IN_PROGRESS, Status.DOWNLOADED);
         return (downloadsInProgress.size() == 0);
     }
 
@@ -147,8 +148,8 @@ public class DownloadMonitorImpl extends ManagerBase implements DownloadMonitor 
 
         vmTemplateStore = _vmTemplateStoreDao.findByStoreTemplate(store.getId(), template.getId());
         if (vmTemplateStore == null) {
-            vmTemplateStore = new TemplateDataStoreVO(store.getId(), template.getId(), new Date(), 0,
-                    Status.NOT_DOWNLOADED, null, null, "jobid0000", null, template.getUri());
+            vmTemplateStore =
+                new TemplateDataStoreVO(store.getId(), template.getId(), new Date(), 0, Status.NOT_DOWNLOADED, null, null, "jobid0000", null, template.getUri());
             vmTemplateStore.setDataStoreRole(store.getRole());
             vmTemplateStore = _vmTemplateStoreDao.persist(vmTemplateStore);
         } else if ((vmTemplateStore.getJobId() != null) && (vmTemplateStore.getJobId().length() > 2)) {
@@ -169,11 +170,11 @@ public class DownloadMonitorImpl extends ManagerBase implements DownloadMonitor 
             }
             EndPoint ep = _epSelector.select(template);
             if (ep == null) {
-                s_logger.warn("There is no secondary storage VM for downloading template to image store " + store.getName());
-                return;
+                String errMsg = "There is no secondary storage VM for downloading template to image store " + store.getName();
+                s_logger.warn(errMsg);
+                throw new CloudRuntimeException(errMsg);
             }
-            DownloadListener dl = new DownloadListener(ep, store, template, _timer, this, dcmd,
-                    callback);
+            DownloadListener dl = new DownloadListener(ep, store, template, _timer, this, dcmd, callback);
             ComponentContext.inject(dl);  // initialize those auto-wired field in download listener.
             if (downloadJobExists) {
                 // due to handling existing download job issues, we still keep
@@ -195,7 +196,6 @@ public class DownloadMonitorImpl extends ManagerBase implements DownloadMonitor 
         }
     }
 
-
     @Override
     public void downloadTemplateToStorage(DataObject template, AsyncCompletionCallback<DownloadAnswer> callback) {
         long templateId = template.getId();
@@ -205,12 +205,13 @@ public class DownloadMonitorImpl extends ManagerBase implements DownloadMonitor 
                 initiateTemplateDownload(template, callback);
             } else {
                 s_logger.info("Template url is null, cannot download");
-                DownloadAnswer ans = new DownloadAnswer("Template url is null", VMTemplateStorageResourceAssoc.Status.DOWNLOAD_ERROR.UNKNOWN);
+                DownloadAnswer ans = new DownloadAnswer("Template url is null", Status.UNKNOWN);
                 callback.complete(ans);
             }
         } else {
             s_logger.info("Template download is already in progress or already downloaded");
-            DownloadAnswer ans = new DownloadAnswer("Template download is already in progress or already downloaded", VMTemplateStorageResourceAssoc.Status.DOWNLOAD_ERROR.UNKNOWN);
+            DownloadAnswer ans =
+                new DownloadAnswer("Template download is already in progress or already downloaded", Status.UNKNOWN);
             callback.complete(ans);
         }
     }
@@ -228,8 +229,7 @@ public class DownloadMonitorImpl extends ManagerBase implements DownloadMonitor 
 
         volumeHost = _volumeStoreDao.findByStoreVolume(store.getId(), volume.getId());
         if (volumeHost == null) {
-            volumeHost = new VolumeDataStoreVO(store.getId(), volume.getId(), new Date(), 0, Status.NOT_DOWNLOADED,
-                    null, null, "jobid0000", null, url, checkSum);
+            volumeHost = new VolumeDataStoreVO(store.getId(), volume.getId(), new Date(), 0, Status.NOT_DOWNLOADED, null, null, "jobid0000", null, url, checkSum);
             _volumeStoreDao.persist(volumeHost);
         } else if ((volumeHost.getJobId() != null) && (volumeHost.getJobId().length() > 2)) {
             downloadJobExists = true;
@@ -267,9 +267,6 @@ public class DownloadMonitorImpl extends ManagerBase implements DownloadMonitor 
             }
         }
     }
-
-
-
 
     private Long getMaxTemplateSizeInBytes() {
         try {

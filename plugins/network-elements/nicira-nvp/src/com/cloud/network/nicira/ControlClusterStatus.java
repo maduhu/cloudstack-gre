@@ -17,66 +17,68 @@
 package com.cloud.network.nicira;
 
 public class ControlClusterStatus {
-	private String cluster_status;
-	private Stats node_stats;
-	private Stats lqueue_stats;
-	private Stats lport_stats;
-	private Stats lrouterport_stats;
-	private Stats lswitch_stats;
-	private Stats zone_stats;
-	private Stats lrouter_stats;
-	private Stats security_profile_stats;
-	
-	public String getClusterStatus() {
-		return cluster_status;
-	}
+    private String clusterStatus;
+    private Stats nodeStats;
+    private Stats queueStats;
+    private Stats portStats;
+    private Stats routerportStats;
+    private Stats switchStats;
+    private Stats zoneStats;
+    private Stats routerStats;
+    private Stats securityProfileStats;
 
-	public Stats getNodeStats() {
-		return node_stats;
-	}
+    public String getClusterStatus() {
+        return clusterStatus;
+    }
 
-	public Stats getLqueueStats() {
-		return lqueue_stats;
-	}
+    public Stats getNodeStats() {
+        return nodeStats;
+    }
 
-	public Stats getLportStats() {
-		return lport_stats;
-	}
+    public Stats getLqueueStats() {
+        return queueStats;
+    }
 
-	public Stats getLrouterportStats() {
-		return lrouterport_stats;
-	}
+    public Stats getLportStats() {
+        return portStats;
+    }
 
-	public Stats getLswitchStats() {
-		return lswitch_stats;
-	}
+    public Stats getLrouterportStats() {
+        return routerportStats;
+    }
 
-	public Stats getZoneStats() {
-		return zone_stats;
-	}
+    public Stats getLswitchStats() {
+        return switchStats;
+    }
 
-	public Stats getLrouterStats() {
-		return lrouter_stats;
-	}
+    public Stats getZoneStats() {
+        return zoneStats;
+    }
 
-	public Stats getSecurityProfileStats() {
-		return security_profile_stats;
-	}
+    public Stats getLrouterStats() {
+        return routerStats;
+    }
 
-	public class Stats {
-		private int error_state_count;
-		private int registered_count;
-		private int active_count;
-		
-		public int getErrorStateCount() {
-			return error_state_count;
-		}
-		public int getRegisteredCount() {
-			return registered_count;
-		}
-		public int getActiveCount() {
-			return active_count;
-		}
-		
-	}
+    public Stats getSecurityProfileStats() {
+        return securityProfileStats;
+    }
+
+    public class Stats {
+        private int errorStateCount;
+        private int registeredCount;
+        private int activeCount;
+
+        public int getErrorStateCount() {
+            return errorStateCount;
+        }
+
+        public int getRegisteredCount() {
+            return registeredCount;
+        }
+
+        public int getActiveCount() {
+            return activeCount;
+        }
+
+    }
 }

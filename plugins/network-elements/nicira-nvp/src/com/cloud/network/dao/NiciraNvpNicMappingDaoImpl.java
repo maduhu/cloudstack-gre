@@ -27,20 +27,19 @@ import com.cloud.utils.db.SearchCriteria;
 import com.cloud.utils.db.SearchCriteria.Op;
 
 @Component
-@Local(value=NiciraNvpNicMappingDao.class)
-public class NiciraNvpNicMappingDaoImpl extends
-        GenericDaoBase<NiciraNvpNicMappingVO, Long> implements NiciraNvpNicMappingDao {
+@Local(value = NiciraNvpNicMappingDao.class)
+public class NiciraNvpNicMappingDaoImpl extends GenericDaoBase<NiciraNvpNicMappingVO, Long> implements NiciraNvpNicMappingDao {
 
     protected final SearchBuilder<NiciraNvpNicMappingVO> nicSearch;
-    
+
     public NiciraNvpNicMappingDaoImpl() {
         nicSearch = createSearchBuilder();
         nicSearch.and("nicUuid", nicSearch.entity().getNicUuid(), Op.EQ);
         nicSearch.done();
     }
-    
+
     @Override
-    public NiciraNvpNicMappingVO findByNicUuid(String nicUuid) {
+    public NiciraNvpNicMappingVO findByNicUuid(final String nicUuid) {
         SearchCriteria<NiciraNvpNicMappingVO> sc = nicSearch.create();
         sc.setParameters("nicUuid", nicUuid);
         return findOneBy(sc);

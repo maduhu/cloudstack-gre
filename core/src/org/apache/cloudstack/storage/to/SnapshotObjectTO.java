@@ -17,12 +17,12 @@
 package org.apache.cloudstack.storage.to;
 
 import org.apache.cloudstack.engine.subsystem.api.storage.SnapshotInfo;
+import org.apache.cloudstack.engine.subsystem.api.storage.VolumeInfo;
 
 import com.cloud.agent.api.to.DataObjectType;
 import com.cloud.agent.api.to.DataStoreTO;
 import com.cloud.agent.api.to.DataTO;
 import com.cloud.hypervisor.Hypervisor.HypervisorType;
-import org.apache.cloudstack.engine.subsystem.api.storage.VolumeInfo;
 
 public class SnapshotObjectTO implements DataTO {
     private String path;
@@ -33,6 +33,7 @@ public class SnapshotObjectTO implements DataTO {
     private String name;
     private HypervisorType hypervisorType;
     private long id;
+    private boolean quiescevm;
 
     public SnapshotObjectTO() {
 
@@ -54,6 +55,7 @@ public class SnapshotObjectTO implements DataTO {
         this.dataStore = snapshot.getDataStore().getTO();
         this.setName(snapshot.getName());
         this.hypervisorType = snapshot.getHypervisorType();
+        this.quiescevm = false;
     }
 
     @Override
@@ -129,9 +131,16 @@ public class SnapshotObjectTO implements DataTO {
         this.hypervisorType = hypervisorType;
     }
 
+    public boolean getquiescevm() {
+        return this.quiescevm;
+    }
+
+    public void setQuiescevm(boolean quiescevm) {
+        this.quiescevm = quiescevm;
+    }
+
     @Override
     public String toString() {
-        return new StringBuilder("SnapshotTO[datastore=").append(dataStore).append("|volume=").append(volume).append("|path")
-                .append(path).append("]").toString();
+        return new StringBuilder("SnapshotTO[datastore=").append(dataStore).append("|volume=").append(volume).append("|path").append(path).append("]").toString();
     }
 }

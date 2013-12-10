@@ -5,7 +5,7 @@
 // to you under the Apache License, Version 2.0 (the
 // "License"); you may not use this file except in compliance
 // with the License.  You may obtain a copy of the License at
-// 
+//
 //   http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing,
@@ -17,23 +17,22 @@
 package com.cloud.network.nicira;
 
 /**
- * 
+ *
  */
 public class PatchAttachment extends Attachment {
-	private final String type = "PatchAttachment";
-	private String peer_port_uuid;
-	
-	public PatchAttachment(String peerPortUuid) {
-		this.peer_port_uuid = peerPortUuid;
-	}
+    private final String type = "PatchAttachment";
+    private String peerPortUuid;
 
-	public String getPeerPortUuid() {
-		return peer_port_uuid;
-	}
+    public PatchAttachment(String peerPortUuid) {
+        this.peerPortUuid = peerPortUuid;
+    }
 
-	public void setPeerPortUuid(String peerPortUuid) {
-		this.peer_port_uuid = peerPortUuid;
-	}
-	
-	
+    public String getPeerPortUuid() {
+        return peerPortUuid;
+    }
+
+    public void setPeerPortUuid(String peerPortUuid) {
+        this.peerPortUuid = peerPortUuid;
+    }
+
 }

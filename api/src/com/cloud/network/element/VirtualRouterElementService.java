@@ -28,12 +28,14 @@ import com.cloud.network.VirtualRouterProvider;
 import com.cloud.network.VirtualRouterProvider.Type;
 import com.cloud.utils.component.PluggableService;
 
-public interface VirtualRouterElementService extends PluggableService{
+public interface VirtualRouterElementService extends PluggableService {
     VirtualRouterProvider configure(ConfigureVirtualRouterElementCmd cmd);
 
 	OvsProvider configure(ConfigureOvsElementCmd cmd);
     VirtualRouterProvider addElement(Long nspId, Type providerType);
+
     VirtualRouterProvider getCreatedElement(long id);
+
     List<? extends VirtualRouterProvider> searchForVirtualRouterElement(ListVirtualRouterElementsCmd cmd);
 
 	List<? extends OvsProvider> searchForOvsElement(ListOvsElementsCmd cmd);

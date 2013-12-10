@@ -5,7 +5,7 @@
 // to you under the Apache License, Version 2.0 (the
 // "License"); you may not use this file except in compliance
 // with the License.  You may obtain a copy of the License at
-// 
+//
 //   http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing,
@@ -17,99 +17,97 @@
 package com.cloud.agent.api;
 
 /**
- * 
+ *
  */
 public class CreateLogicalRouterCommand extends Command {
-	private String _gatewayServiceUuid;
-	private String _logicalSwitchUuid;
-	private long _vlanId;
-	private String _name;
-	private String _ownerName;
-	private String _publicIpCidr;
-	private String _publicNextHop;
-	private String _internalIpCidr;
-	
-	public CreateLogicalRouterCommand(String gatewayServiceUuid, long vlanId,
-			String logicalSwitchUuid, String name, 
-			String publicIpCidr, String publicNextHop, 
-			String internalIpCidr, String ownerName) {
-		super();
-		this._gatewayServiceUuid = gatewayServiceUuid;
-		this._logicalSwitchUuid = logicalSwitchUuid;
-		this._vlanId = vlanId;
-		this._name = name;
-		this._ownerName = ownerName;
-		this._publicIpCidr = publicIpCidr;
-		this._publicNextHop = publicNextHop;
-		this._internalIpCidr = internalIpCidr;
-	}
-	
+    private String gatewayServiceUuid;
+    private String logicalSwitchUuid;
+    private long vlanId;
+    private String name;
+    private String ownerName;
+    private String publicIpCidr;
+    private String publicNextHop;
+    private String internalIpCidr;
+
+    public CreateLogicalRouterCommand(final String gatewayServiceUuid, final long vlanId, final String logicalSwitchUuid, final String name, final String publicIpCidr,
+            final String publicNextHop, final String internalIpCidr, final String ownerName) {
+        super();
+        this.gatewayServiceUuid = gatewayServiceUuid;
+        this.logicalSwitchUuid = logicalSwitchUuid;
+        this.vlanId = vlanId;
+        this.name = name;
+        this.ownerName = ownerName;
+        this.publicIpCidr = publicIpCidr;
+        this.publicNextHop = publicNextHop;
+        this.internalIpCidr = internalIpCidr;
+    }
+
     @Override
     public boolean executeInSequence() {
         return false;
     }
 
-	public String getGatewayServiceUuid() {
-		return _gatewayServiceUuid;
-	}
+    public String getGatewayServiceUuid() {
+        return gatewayServiceUuid;
+    }
 
-	public void setGatewayServiceUuid(String gatewayServiceUuid) {
-		this._gatewayServiceUuid = gatewayServiceUuid;
-	}
-	
-	public String getLogicalSwitchUuid() {
-		return _logicalSwitchUuid;
-	}
-	
-	public void setLogicalSwitchUuid(String logicalSwitchUuid) {
-		_logicalSwitchUuid = logicalSwitchUuid;
-	}
+    public void setGatewayServiceUuid(final String gatewayServiceUuid) {
+        this.gatewayServiceUuid = gatewayServiceUuid;
+    }
 
-	public long getVlanId() {
-		return _vlanId;
-	}
+    public String getLogicalSwitchUuid() {
+        return logicalSwitchUuid;
+    }
 
-	public void setVlanId(long vlanId) {
-		this._vlanId = vlanId;
-	}
+    public void setLogicalSwitchUuid(final String logicalSwitchUuid) {
+        this.logicalSwitchUuid = logicalSwitchUuid;
+    }
 
-	public String getName() {
-		return _name;
-	}
+    public long getVlanId() {
+        return vlanId;
+    }
 
-	public void setName(String name) {
-		this._name = name;
-	}
+    public void setVlanId(final long vlanId) {
+        this.vlanId = vlanId;
+    }
 
-	public String getOwnerName() {
-		return _ownerName;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setOwnerName(String ownerName) {
-		this._ownerName = ownerName;
-	}
+    public void setName(final String name) {
+        this.name = name;
+    }
 
-	public String getPublicIpCidr() {
-		return _publicIpCidr;
-	}
+    public String getOwnerName() {
+        return ownerName;
+    }
 
-	public void setPublicIpCidr(String publicIpCidr) {
-		this._publicIpCidr = publicIpCidr;
-	}
+    public void setOwnerName(final String ownerName) {
+        this.ownerName = ownerName;
+    }
 
-	public String getInternalIpCidr() {
-		return _internalIpCidr;
-	}
+    public String getPublicIpCidr() {
+        return publicIpCidr;
+    }
 
-	public void setInternalIpCidr(String internalIpCidr) {
-		this._internalIpCidr = internalIpCidr;
-	}
-	
-	public String getPublicNextHop() {
-		return _publicNextHop;
-	}
-	
-	public void setPublicNextHop(String publicNextHop) {
-		this._publicNextHop = publicNextHop;
-	}
+    public void setPublicIpCidr(final String publicIpCidr) {
+        this.publicIpCidr = publicIpCidr;
+    }
+
+    public String getInternalIpCidr() {
+        return internalIpCidr;
+    }
+
+    public void setInternalIpCidr(final String internalIpCidr) {
+        this.internalIpCidr = internalIpCidr;
+    }
+
+    public String getPublicNextHop() {
+        return publicNextHop;
+    }
+
+    public void setPublicNextHop(final String publicNextHop) {
+        this.publicNextHop = publicNextHop;
+    }
 }

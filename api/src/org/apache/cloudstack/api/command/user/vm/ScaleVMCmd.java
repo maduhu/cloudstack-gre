@@ -16,23 +16,36 @@
 // under the License.
 package org.apache.cloudstack.api.command.user.vm;
 
-import com.cloud.event.EventTypes;
-import com.cloud.exception.*;
-import com.cloud.user.Account;
-import com.cloud.uservm.UserVm;
-
-import org.apache.cloudstack.api.*;
-import org.apache.cloudstack.api.response.ServiceOfferingResponse;
-import org.apache.cloudstack.api.response.SuccessResponse;
-import org.apache.cloudstack.api.response.UserVmResponse;
-import org.apache.cloudstack.context.CallContext;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import java.util.List;
+import org.apache.cloudstack.api.ACL;
+import org.apache.cloudstack.api.APICommand;
+import org.apache.cloudstack.api.ApiConstants;
+import org.apache.cloudstack.api.ApiErrorCode;
+import org.apache.cloudstack.api.BaseAsyncCmd;
+import org.apache.cloudstack.api.Parameter;
+import org.apache.cloudstack.api.ServerApiException;
+import org.apache.cloudstack.api.response.ServiceOfferingResponse;
+import org.apache.cloudstack.api.response.SuccessResponse;
+import org.apache.cloudstack.api.response.UserVmResponse;
+
+import com.cloud.event.EventTypes;
+import com.cloud.exception.ConcurrentOperationException;
+import com.cloud.exception.ManagementServerException;
+import com.cloud.exception.ResourceUnavailableException;
+import com.cloud.exception.VirtualMachineMigrationException;
+import com.cloud.user.Account;
+import com.cloud.uservm.UserVm;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 
-@APICommand(name = "scaleVirtualMachine", description="Scales the virtual machine to a new service offering.", responseObject=SuccessResponse.class)
+@APICommand(name = "scaleVirtualMachine", description = "Scales the virtual machine to a new service offering.", responseObject = SuccessResponse.class)
 public class ScaleVMCmd extends BaseAsyncCmd {
     public static final Logger s_logger = Logger.getLogger(ScaleVMCmd.class.getName());
     private static final String s_name = "scalevirtualmachineresponse";
@@ -42,14 +55,21 @@ public class ScaleVMCmd extends BaseAsyncCmd {
     /////////////////////////////////////////////////////
 
     @ACL
-    @Parameter(name=ApiConstants.ID, type=CommandType.UUID, entityType=UserVmResponse.class,
-            required=true, description="The ID of the virtual machine")
+    @Parameter(name = ApiConstants.ID, type = CommandType.UUID, entityType = UserVmResponse.class, required = true, description = "The ID of the virtual machine")
     private Long id;
 
     @ACL
-    @Parameter(name=ApiConstants.SERVICE_OFFERING_ID, type=CommandType.UUID, entityType=ServiceOfferingResponse.class,
-            required=true, description="the ID of the service offering for the virtual machine")
+    @Parameter(name = ApiConstants.SERVICE_OFFERING_ID,
+               type = CommandType.UUID,
+               entityType = ServiceOfferingResponse.class,
+               required = true,
+               description = "the ID of the service offering for the virtual machine")
     private Long serviceOfferingId;
+
+    @Parameter(name=ApiConstants.CUSTOM_PARAMETERS,
+            type = CommandType.MAP,
+            description = "name value pairs of custom parameters for cpu, memory and cpunumber. example customparameters[i].name=value")
+    private Map<String, String> customParameters;
 
     /////////////////////////////////////////////////////
     /////////////////// Accessors ///////////////////////
@@ -61,6 +81,24 @@ public class ScaleVMCmd extends BaseAsyncCmd {
 
     public Long getServiceOfferingId() {
         return serviceOfferingId;
+    }
+
+    //instead of reading a map directly we are using collections.
+    //it is because customParameters.values() cannot be cast to a map.
+    //it gives a exception
+    public Map<String, String> getCustomParameters() {
+        Map<String,String> customparameterMap = new HashMap<String, String>();
+        if (customParameters != null && customParameters.size() !=0){
+            Collection parameterCollection = customParameters.values();
+            Iterator iter = parameterCollection.iterator();
+            while (iter.hasNext()) {
+                HashMap<String, String> value = (HashMap<String, String>) iter.next();
+                for (String key : value.keySet()) {
+                    customparameterMap.put(key, value.get(key));
+                }
+            }
+        }
+        return customparameterMap;
     }
 
     /////////////////////////////////////////////////////
@@ -93,11 +131,11 @@ public class ScaleVMCmd extends BaseAsyncCmd {
 
     @Override
     public String getEventDescription() {
-        return  "upgrading vm: " + getId() + " to service offering: " + getServiceOfferingId();
+        return "upgrading vm: " + getId() + " to service offering: " + getServiceOfferingId();
     }
 
     @Override
-    public void execute(){
+    public void execute() {
         UserVm result;
         try {
             result = _userVmService.upgradeVirtualMachine(this);
@@ -114,7 +152,7 @@ public class ScaleVMCmd extends BaseAsyncCmd {
             s_logger.warn("Exception: ", ex);
             throw new ServerApiException(ApiErrorCode.INTERNAL_ERROR, ex.getMessage());
         }
-        if (result != null){
+        if (result != null) {
             List<UserVmResponse> responseList = _responseGenerator.createUserVmResponse("virtualmachine", result);
             UserVmResponse response = responseList.get(0);
             response.setResponseName(getCommandName());

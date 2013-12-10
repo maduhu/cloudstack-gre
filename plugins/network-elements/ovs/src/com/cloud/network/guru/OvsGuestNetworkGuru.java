@@ -219,5 +219,4 @@ public class OvsGuestNetworkGuru extends GuestNetworkGuru {
 			implemented.setBroadcastUri(network.getBroadcastUri());
 		}
 	}
-
 }

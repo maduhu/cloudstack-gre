@@ -16,8 +16,6 @@
 // under the License.
 package com.cloud.network;
 
-import org.apache.cloudstack.api.InternalIdentity;
-
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -27,49 +25,50 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import org.apache.cloudstack.api.InternalIdentity;
+
 @Entity
-@Table(name="external_nicira_nvp_devices")
+@Table(name = "external_nicira_nvp_devices")
 public class NiciraNvpDeviceVO implements InternalIdentity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name="id")
+    @Column(name = "id")
     private long id;
-    
-    @Column(name="uuid")
+
+    @Column(name = "uuid")
     private String uuid;
-    
-    @Column(name="host_id")
+
+    @Column(name = "host_id")
     private long hostId;
-    
-    @Column(name="physical_network_id")
+
+    @Column(name = "physical_network_id")
     private long physicalNetworkId;
-    
-    @Column(name="provider_name")
+
+    @Column(name = "provider_name")
     private String providerName;
-    
-    @Column(name="device_name")
+
+    @Column(name = "device_name")
     private String deviceName;
 
-    
     public NiciraNvpDeviceVO() {
-        this.uuid = UUID.randomUUID().toString();
+        uuid = UUID.randomUUID().toString();
     }
 
-    public NiciraNvpDeviceVO(long hostId, long physicalNetworkId,
-            String providerName, String deviceName) {
+    public NiciraNvpDeviceVO(final long hostId, final long physicalNetworkId, final String providerName, final String deviceName) {
         super();
         this.hostId = hostId;
         this.physicalNetworkId = physicalNetworkId;
         this.providerName = providerName;
         this.deviceName = deviceName;
-        this.uuid = UUID.randomUUID().toString();
+        uuid = UUID.randomUUID().toString();
     }
 
+    @Override
     public long getId() {
         return id;
     }
-    
+
     public String getUuid() {
         return uuid;
     }
@@ -93,5 +92,5 @@ public class NiciraNvpDeviceVO implements InternalIdentity {
     public String getDeviceName() {
         return deviceName;
     }
-    
+
 }

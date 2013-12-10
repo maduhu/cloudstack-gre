@@ -33,14 +33,13 @@ import com.cloud.utils.PropertiesUtil;
 
 /**
  * Uses Properties to implement storage.
- * 
+ *
  * @config {@table || Param Name | Description | Values | Default || || path |
  *         path to the properties _file | String | db/db.properties || * }
  **/
-@Local(value = { StorageComponent.class })
+@Local(value = {StorageComponent.class})
 public class PropertiesStorage implements StorageComponent {
-    private static final Logger s_logger = Logger
-            .getLogger(PropertiesStorage.class);
+    private static final Logger s_logger = Logger.getLogger(PropertiesStorage.class);
     Properties _properties = new Properties();
     File _file;
     String _name;
@@ -69,7 +68,7 @@ public class PropertiesStorage implements StorageComponent {
     @Override
     public boolean configure(String name, Map<String, Object> params) {
         _name = name;
-        String path = (String) params.get("path");
+        String path = (String)params.get("path");
         if (path == null) {
             path = "agent.properties";
         }
@@ -79,13 +78,11 @@ public class PropertiesStorage implements StorageComponent {
             file = new File(path);
             try {
                 if (!file.createNewFile()) {
-                    s_logger.error("Unable to create _file: "
-                            + file.getAbsolutePath());
+                    s_logger.error("Unable to create _file: " + file.getAbsolutePath());
                     return false;
                 }
             } catch (IOException e) {
-                s_logger.error(
-                        "Unable to create _file: " + file.getAbsolutePath(), e);
+                s_logger.error("Unable to create _file: " + file.getAbsolutePath(), e);
                 return false;
             }
         }
@@ -119,34 +116,33 @@ public class PropertiesStorage implements StorageComponent {
         return true;
     }
 
-	@Override
-	public void setName(String name) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    public void setName(String name) {
+        // TODO Auto-generated method stub
 
-	@Override
-	public void setConfigParams(Map<String, Object> params) {
-		// TODO Auto-generated method stub
-		
-	}
+    }
 
-	@Override
-	public Map<String, Object> getConfigParams() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    public void setConfigParams(Map<String, Object> params) {
+        // TODO Auto-generated method stub
 
-	@Override
-	public int getRunLevel() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+    }
 
-	@Override
-	public void setRunLevel(int level) {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    public Map<String, Object> getConfigParams() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int getRunLevel() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    @Override
+    public void setRunLevel(int level) {
+        // TODO Auto-generated method stub
+    }
 
 }

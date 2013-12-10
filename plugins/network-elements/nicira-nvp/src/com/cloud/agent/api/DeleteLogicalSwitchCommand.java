@@ -17,11 +17,11 @@
 package com.cloud.agent.api;
 
 public class DeleteLogicalSwitchCommand extends Command {
-    
-    private String _logicalSwitchUuid;
-    
-    public DeleteLogicalSwitchCommand(String logicalSwitchUuid) {
-        this._logicalSwitchUuid = logicalSwitchUuid;
+
+    private final String logicalSwitchUuid;
+
+    public DeleteLogicalSwitchCommand(final String logicalSwitchUuid) {
+        this.logicalSwitchUuid = logicalSwitchUuid;
     }
 
     @Override
@@ -30,6 +30,6 @@ public class DeleteLogicalSwitchCommand extends Command {
     }
 
     public String getLogicalSwitchUuid() {
-        return _logicalSwitchUuid;
+        return logicalSwitchUuid;
     }
 }

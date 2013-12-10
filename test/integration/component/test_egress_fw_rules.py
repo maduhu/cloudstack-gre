@@ -39,7 +39,7 @@ from marvin.integration.lib.common import (get_domain,
 from marvin.cloudstackAPI.createEgressFirewallRule import createEgressFirewallRuleCmd
 from marvin.cloudstackAPI.deleteEgressFirewallRule import deleteEgressFirewallRuleCmd
 
-from marvin.remoteSSHClient import remoteSSHClient
+from marvin.sshClient import SshClient
 import time
 
 class Services:
@@ -214,7 +214,7 @@ class TestEgressFWRules(cloudstackTestCase):
                                                          networkids=[str(self.network.id)],
                                                          projectid=project.id if project else None)
         except Exception as e:
-            self.debug('error=%s' % e)
+            self.fail("Virtual machine deployment failed with exception: %s" % e)
         self.debug("Deployed instance in account: %s" % self.account.name)
 
     def exec_script_on_user_vm(self, script, exec_cmd_params, expected_result, negative_test=False):
@@ -270,7 +270,7 @@ class TestEgressFWRules(cloudstackTestCase):
             fd.write(expect_script)
             fd.close()
 
-            ssh = remoteSSHClient(host=sourceip,
+            ssh = SshClient(host=sourceip,
                                   port=22,
                                   user='root',
                                   passwd=self.services["host_password"])
@@ -280,15 +280,15 @@ class TestEgressFWRules(cloudstackTestCase):
             self.debug("%s %s" % (script_file, exec_cmd_params))
 
             exec_success = False
-            #Timeout set to 3 minutes
-            timeout = 180
+            #Timeout set to 6 minutes
+            timeout = 360
             while timeout:
                 self.debug('sleep %s seconds for egress rule to affect on Router.' % self.services['sleep'])
                 time.sleep(self.services['sleep'])
                 result = ssh.execute("%s %s" % (script_file, exec_cmd_params))
                 self.debug('Result is=%s' % result)
                 self.debug('Expected result is=%s' % expected_result)
-                
+
                 if str(result).strip() == expected_result:
                     exec_success = True
                     break
@@ -301,9 +301,9 @@ class TestEgressFWRules(cloudstackTestCase):
                     else: # Failed due to some other error
                         break
             #end while
-            
+
             if timeout == 0:
-                self.fail("Router network failed to come up after 3 minutes.")
+                self.fail("Router network failed to come up after 6 minutes.")
 
             ssh.execute('rm -rf %s' % script_file)
 
@@ -376,16 +376,25 @@ class TestEgressFWRules(cloudstackTestCase):
             self.debug("Cleaning up the resources")
             self.virtual_machine.delete(self.apiclient)
             wait_for_cleanup(self.apiclient, ["expunge.interval", "expunge.delay"])
-            self.debug("Sleep for VM cleanup to complete.")
-            #time.sleep(self.services['sleep'])
+
+            retriesCount = 5
+            while True:
+                vms = list_virtual_machines(self.apiclient, id=self.virtual_machine.id)
+                if vms is None:
+                    break
+                elif retriesCount == 0:
+                    self.fail("Failed to delete/expunge VM")
+
+                time.sleep(10)
+                retriesCount -= 1
+
             self.network.delete(self.apiclient)
             self.debug("Sleep for Network cleanup to complete.")
             wait_for_cleanup(self.apiclient, ["network.gc.wait", "network.gc.interval"])
-            #time.sleep(self.services['sleep'])
             cleanup_resources(self.apiclient, reversed(self.cleanup))
             self.debug("Cleanup complete!")
         except Exception as e:
-            self.debug("Warning! Exception in tearDown: %s" % e)
+            self.fail("Warning! Cleanup failed: %s" % e)            
 
     @attr(tags = ["advanced"])
     def test_01_egress_fr1(self):

@@ -19,26 +19,44 @@
 
 package com.cloud.hypervisor.kvm.resource;
 
-import com.cloud.agent.api.to.VirtualMachineTO;
-import com.cloud.template.VirtualMachineTemplate.BootloaderType;
-import com.cloud.utils.Pair;
-import com.cloud.vm.VirtualMachine;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
-import junit.framework.Assert;
-import org.apache.commons.lang.SystemUtils;
-import org.junit.Assume;
-import org.junit.Test;
-
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import junit.framework.Assert;
+
+import org.apache.commons.lang.SystemUtils;
+import org.junit.Assume;
+import org.junit.Test;
+import org.libvirt.Connect;
+import org.libvirt.Domain;
+import org.libvirt.DomainBlockStats;
+import org.libvirt.DomainInfo;
+import org.libvirt.DomainInterfaceStats;
+import org.libvirt.LibvirtException;
+import org.libvirt.NodeInfo;
+import org.mockito.Matchers;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
+
+import com.cloud.agent.api.VmStatsEntry;
+import com.cloud.agent.api.to.VirtualMachineTO;
+import com.cloud.hypervisor.kvm.resource.LibvirtVMDef.DiskDef;
+import com.cloud.hypervisor.kvm.resource.LibvirtVMDef.InterfaceDef;
+import com.cloud.template.VirtualMachineTemplate.BootloaderType;
+import com.cloud.utils.Pair;
+import com.cloud.vm.VirtualMachine;
 
 public class LibvirtComputingResourceTest {
 
     String _hyperVisorType = "kvm";
     Random _random = new Random();
+
     /**
         This test tests if the Agent can handle a vmSpec coming
         from a <=4.1 management server.
@@ -139,7 +157,8 @@ public class LibvirtComputingResourceTest {
         String vncPassword = "mySuperSecretPassword";
 
         LibvirtComputingResource lcr = new LibvirtComputingResource();
-        VirtualMachineTO to = new VirtualMachineTO(id, name, VirtualMachine.Type.User, cpus, minSpeed, maxSpeed, minRam, maxRam, BootloaderType.HVM, os, false, false, vncPassword);
+        VirtualMachineTO to =
+            new VirtualMachineTO(id, name, VirtualMachine.Type.User, cpus, minSpeed, maxSpeed, minRam, maxRam, BootloaderType.HVM, os, false, false, vncPassword);
         to.setVncAddr(vncAddr);
         to.setUuid("b0f0a72d-7efb-3cad-a8ff-70ebf30b3af9");
 
@@ -202,12 +221,88 @@ public class LibvirtComputingResourceTest {
     public void testUUID() {
         String uuid = "1";
         LibvirtComputingResource lcr = new LibvirtComputingResource();
-        uuid =lcr.getUuid(uuid);
+        uuid = lcr.getUuid(uuid);
         Assert.assertTrue(!uuid.equals("1"));
 
         String oldUuid = UUID.randomUUID().toString();
         uuid = oldUuid;
         uuid = lcr.getUuid(uuid);
         Assert.assertTrue(uuid.equals(oldUuid));
+    }
+
+    private static final String VMNAME = "test";
+
+    @Test
+    public void testGetVmStat() throws LibvirtException {
+        Connect connect = Mockito.mock(Connect.class);
+        Domain domain = Mockito.mock(Domain.class);
+        DomainInfo domainInfo = new DomainInfo();
+        Mockito.when(domain.getInfo()).thenReturn(domainInfo);
+        Mockito.when(connect.domainLookupByName(VMNAME)).thenReturn(domain);
+        NodeInfo nodeInfo = new NodeInfo();
+        nodeInfo.cpus = 8;
+        nodeInfo.memory = 8 * 1024 * 1024;
+        nodeInfo.sockets = 2;
+        nodeInfo.threads = 2;
+        nodeInfo.model = "Foo processor";
+        Mockito.when(connect.nodeInfo()).thenReturn(nodeInfo);
+        // this is testing the interface stats, returns an increasing number of sent and received bytes
+        Mockito.when(domain.interfaceStats(Matchers.anyString())).thenAnswer(new Answer<DomainInterfaceStats>() {
+            // increment with less than a KB, so this should be less than 1 KB
+            final static int increment = 1000;
+            int rx_bytes = 1000;
+            int tx_bytes = 1000;
+
+            @Override
+            public DomainInterfaceStats answer(InvocationOnMock invocation) throws Throwable {
+                DomainInterfaceStats domainInterfaceStats = new DomainInterfaceStats();
+                domainInterfaceStats.rx_bytes = (this.rx_bytes += increment);
+                domainInterfaceStats.tx_bytes = (this.tx_bytes += increment);
+                return domainInterfaceStats;
+
+            }
+
+        });
+
+        Mockito.when(domain.blockStats(Matchers.anyString())).thenAnswer(new Answer<DomainBlockStats>() {
+            // a little less than a KB
+            final static int increment = 1000;
+
+            int rd_bytes = 0;
+            int wr_bytes = 1024;
+
+            @Override
+            public DomainBlockStats answer(InvocationOnMock invocation) throws Throwable {
+                DomainBlockStats domainBlockStats = new DomainBlockStats();
+
+                domainBlockStats.rd_bytes = (rd_bytes += increment);
+                domainBlockStats.wr_bytes = (wr_bytes += increment);
+                return domainBlockStats;
+            }
+
+        });
+
+        LibvirtComputingResource libvirtComputingResource = new LibvirtComputingResource() {
+            @Override
+            protected List<InterfaceDef> getInterfaces(Connect conn, String vmName) {
+                InterfaceDef interfaceDef = new InterfaceDef();
+                return Arrays.asList(interfaceDef);
+            }
+
+            @Override
+            public List<DiskDef> getDisks(Connect conn, String vmName) {
+                DiskDef diskDef = new DiskDef();
+                return Arrays.asList(diskDef);
+            }
+
+        };
+        libvirtComputingResource.getVmStat(connect, VMNAME);
+        VmStatsEntry vmStat = libvirtComputingResource.getVmStat(connect, VMNAME);
+        // network traffic as generated by the logic above, must be greater than zero
+        Assert.assertTrue(vmStat.getNetworkReadKBs() > 0);
+        Assert.assertTrue(vmStat.getNetworkWriteKBs() > 0);
+        // IO traffic as generated by the logic above, must be greater than zero
+        Assert.assertTrue(vmStat.getDiskReadKBs() > 0);
+        Assert.assertTrue(vmStat.getDiskWriteKBs() > 0);
     }
 }

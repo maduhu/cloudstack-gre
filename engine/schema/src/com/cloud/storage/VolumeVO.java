@@ -35,14 +35,12 @@ import javax.persistence.Transient;
 import com.cloud.storage.Storage.StoragePoolType;
 import com.cloud.utils.NumbersUtil;
 import com.cloud.utils.db.GenericDao;
-import com.cloud.vm.VirtualMachine.State;
 
 @Entity
 @Table(name = "volumes")
 public class VolumeVO implements Volume {
     @Id
-    @TableGenerator(name = "volume_sq", table = "sequence", pkColumnName = "name", valueColumnName = "value",
-            pkColumnValue = "volume_seq", allocationSize = 1)
+    @TableGenerator(name = "volume_sq", table = "sequence", pkColumnName = "name", valueColumnName = "value", pkColumnValue = "volume_seq", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.TABLE)
     @Column(name = "id")
     long id;
@@ -136,7 +134,7 @@ public class VolumeVO implements Volume {
     @Enumerated(value = EnumType.STRING)
     private State state;
 
-    @Column(name = "chain_info")
+    @Column(name = "chain_info", length = 65535)
     String chainInfo;
 
     @Column(name = "uuid")
@@ -156,15 +154,16 @@ public class VolumeVO implements Volume {
 
     @Column(name = "iso_id")
     private Long isoId;
-    
+
     @Transient
     // @Column(name="reservation")
     String reservationId;
 
+    @Column(name = "hv_ss_reserve")
+    Integer hypervisorSnapshotReserve;
+
     // Real Constructor
-    public VolumeVO(Type type, String name, long dcId, long domainId,
-            long accountId, long diskOfferingId, long size,
-            Long minIops, Long maxIops, String iScsiName) {
+    public VolumeVO(Type type, String name, long dcId, long domainId, long accountId, long diskOfferingId, long size, Long minIops, Long maxIops, String iScsiName) {
         this.volumeType = type;
         this.name = name;
         this.dataCenterId = dcId;
@@ -179,10 +178,8 @@ public class VolumeVO implements Volume {
         this.uuid = UUID.randomUUID().toString();
     }
 
-    public VolumeVO(String name, long dcId, Long podId, long accountId,
-            long domainId, Long instanceId, String folder, String path,
-            long size, Long minIops, Long maxIops, String iScsiName,
-            Volume.Type vType) {
+    public VolumeVO(String name, long dcId, Long podId, long accountId, long domainId, Long instanceId, String folder, String path, long size, Long minIops,
+            Long maxIops, String iScsiName, Volume.Type vType) {
         this.name = name;
         this.accountId = accountId;
         this.domainId = domainId;
@@ -201,9 +198,7 @@ public class VolumeVO implements Volume {
         this.uuid = UUID.randomUUID().toString();
     }
 
-    public VolumeVO(String name, long dcId, long podId, long accountId,
-            long domainId, Long instanceId, String folder, String path,
-            long size, Volume.Type vType) {
+    public VolumeVO(String name, long dcId, long podId, long accountId, long domainId, Long instanceId, String folder, String path, long size, Volume.Type vType) {
         this.name = name;
         this.accountId = accountId;
         this.domainId = domainId;
@@ -224,9 +219,19 @@ public class VolumeVO implements Volume {
 
     // Copy Constructor
     public VolumeVO(Volume that) {
-        this(that.getName(), that.getDataCenterId(), that.getPodId(), that.getAccountId(), that.getDomainId(), that.getInstanceId(),
-        		that.getFolder(), that.getPath(), that.getSize(), that.getMinIops(), that.getMaxIops(),
-        		that.get_iScsiName(), that.getVolumeType());
+        this(that.getName(),
+            that.getDataCenterId(),
+            that.getPodId(),
+            that.getAccountId(),
+            that.getDomainId(),
+            that.getInstanceId(),
+            that.getFolder(),
+            that.getPath(),
+            that.getSize(),
+            that.getMinIops(),
+            that.getMaxIops(),
+            that.get_iScsiName(),
+            that.getVolumeType());
         this.recreatable = that.isRecreatable();
         this.state = that.getState();
         this.size = that.getSize();
@@ -471,8 +476,7 @@ public class VolumeVO implements Volume {
 
     @Override
     public String toString() {
-        return new StringBuilder("Vol[").append(id).append("|vm=").append(instanceId).append("|").append(volumeType)
-                .append("]").toString();
+        return new StringBuilder("Vol[").append(id).append("|vm=").append(instanceId).append("|").append(volumeType).append("]").toString();
     }
 
     @Override
@@ -509,7 +513,7 @@ public class VolumeVO implements Volume {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof VolumeVO) {
-            return id == ((VolumeVO) obj).id;
+            return id == ((VolumeVO)obj).id;
         } else {
             return false;
         }
@@ -536,11 +540,11 @@ public class VolumeVO implements Volume {
 
     @Override
     public String get_iScsiName() {
-    	return this._iScsiName;
+        return this._iScsiName;
     }
 
     public void set_iScsiName(String iScsiName) {
-    	this._iScsiName = iScsiName;
+        this._iScsiName = iScsiName;
     }
 
     public boolean isDisplayVolume() {
@@ -551,6 +555,7 @@ public class VolumeVO implements Volume {
         this.displayVolume = displayVolume;
     }
 
+    @Override
     public Storage.ImageFormat getFormat() {
         return format;
     }
@@ -558,12 +563,13 @@ public class VolumeVO implements Volume {
     public void setFormat(Storage.ImageFormat format) {
         this.format = format;
     }
-    
-    public void setVmSnapshotChainSize(Long vmSnapshotChainSize){
+
+    public void setVmSnapshotChainSize(Long vmSnapshotChainSize) {
         this.vmSnapshotChainSize = vmSnapshotChainSize;
     }
 
-    public Long getVmSnapshotChainSize(){
+    @Override
+    public Long getVmSnapshotChainSize() {
         return this.vmSnapshotChainSize;
     }
 
@@ -572,12 +578,22 @@ public class VolumeVO implements Volume {
     }
 
     public void setIsoId(Long isoId) {
-        this.isoId =isoId;
+        this.isoId = isoId;
     }
-    
+
     // don't use this directly, use volume state machine instead
     // This method is used by UpdateVolume as a part of "Better control over first class objects in CS"
     public void setState(State state) {
         this.state = state;
+    }
+
+    @Override
+    public void setHypervisorSnapshotReserve(Integer hypervisorSnapshotReserve) {
+        this.hypervisorSnapshotReserve = hypervisorSnapshotReserve;
+    }
+
+    @Override
+    public Integer getHypervisorSnapshotReserve() {
+        return hypervisorSnapshotReserve;
     }
 }

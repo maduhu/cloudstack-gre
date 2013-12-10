@@ -18,20 +18,16 @@ package com.cloud.api.commands;
 
 import javax.inject.Inject;
 
-import com.cloud.api.response.NiciraNvpDeviceResponse;
-
-import org.apache.log4j.Logger;
-
+import org.apache.cloudstack.api.APICommand;
 import org.apache.cloudstack.api.ApiConstants;
 import org.apache.cloudstack.api.ApiErrorCode;
 import org.apache.cloudstack.api.BaseAsyncCmd;
-import org.apache.cloudstack.api.BaseCmd;
-import org.apache.cloudstack.api.APICommand;
 import org.apache.cloudstack.api.Parameter;
 import org.apache.cloudstack.api.ServerApiException;
 import org.apache.cloudstack.api.response.SuccessResponse;
 import org.apache.cloudstack.context.CallContext;
 
+import com.cloud.api.response.NiciraNvpDeviceResponse;
 import com.cloud.event.EventTypes;
 import com.cloud.exception.ConcurrentOperationException;
 import com.cloud.exception.InsufficientCapacityException;
@@ -41,18 +37,21 @@ import com.cloud.exception.ResourceUnavailableException;
 import com.cloud.network.element.NiciraNvpElementService;
 import com.cloud.utils.exception.CloudRuntimeException;
 
-@APICommand(name = "deleteNiciraNvpDevice", responseObject=SuccessResponse.class, description=" delete a nicira nvp device")
+@APICommand(name = "deleteNiciraNvpDevice", responseObject = SuccessResponse.class, description = " delete a nicira nvp device")
 public class DeleteNiciraNvpDeviceCmd extends BaseAsyncCmd {
-    private static final Logger s_logger = Logger.getLogger(DeleteNiciraNvpDeviceCmd.class.getName());
     private static final String s_name = "deleteniciranvpdeviceresponse";
-    @Inject NiciraNvpElementService _niciraNvpElementService;
+    @Inject
+    protected NiciraNvpElementService niciraNvpElementService;
 
     /////////////////////////////////////////////////////
     //////////////// API parameters /////////////////////
     /////////////////////////////////////////////////////
 
-    @Parameter(name=ApiConstants.NICIRA_NVP_DEVICE_ID, type=CommandType.UUID, entityType = NiciraNvpDeviceResponse.class,
-            required=true, description="Nicira device ID")
+    @Parameter(name = ApiConstants.NICIRA_NVP_DEVICE_ID,
+               type = CommandType.UUID,
+               entityType = NiciraNvpDeviceResponse.class,
+               required = true,
+               description = "Nicira device ID")
     private Long niciraNvpDeviceId;
 
     /////////////////////////////////////////////////////
@@ -68,17 +67,18 @@ public class DeleteNiciraNvpDeviceCmd extends BaseAsyncCmd {
     /////////////////////////////////////////////////////
 
     @Override
-    public void execute() throws ResourceUnavailableException, InsufficientCapacityException, ServerApiException, ConcurrentOperationException, ResourceAllocationException {
+    public void execute() throws ResourceUnavailableException, InsufficientCapacityException, ServerApiException, ConcurrentOperationException,
+        ResourceAllocationException {
         try {
-            boolean result = _niciraNvpElementService.deleteNiciraNvpDevice(this);
+            boolean result = niciraNvpElementService.deleteNiciraNvpDevice(this);
             if (result) {
                 SuccessResponse response = new SuccessResponse(getCommandName());
                 response.setResponseName(getCommandName());
-                this.setResponseObject(response);
+                setResponseObject(response);
             } else {
                 throw new ServerApiException(ApiErrorCode.INTERNAL_ERROR, "Failed to delete Nicira device.");
             }
-        }  catch (InvalidParameterValueException invalidParamExcp) {
+        } catch (InvalidParameterValueException invalidParamExcp) {
             throw new ServerApiException(ApiErrorCode.PARAM_ERROR, invalidParamExcp.getMessage());
         } catch (CloudRuntimeException runtimeExcp) {
             throw new ServerApiException(ApiErrorCode.INTERNAL_ERROR, runtimeExcp.getMessage());
@@ -95,14 +95,14 @@ public class DeleteNiciraNvpDeviceCmd extends BaseAsyncCmd {
         return CallContext.current().getCallingAccount().getId();
     }
 
-	@Override
-	public String getEventType() {
-		return EventTypes.EVENT_EXTERNAL_NVP_CONTROLLER_DELETE;
-	}
+    @Override
+    public String getEventType() {
+        return EventTypes.EVENT_EXTERNAL_NVP_CONTROLLER_DELETE;
+    }
 
-	@Override
-	public String getEventDescription() {
-		return "Deleting Nicira Nvp Controller";
-	}
+    @Override
+    public String getEventDescription() {
+        return "Deleting Nicira Nvp Controller";
+    }
 
 }

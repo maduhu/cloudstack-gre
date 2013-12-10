@@ -17,45 +17,40 @@
 package com.cloud.agent.api;
 
 public class UpdateLogicalSwitchPortCommand extends Command {
-    private String _logicalSwitchUuid;
-    private String _logicalSwitchPortUuid;
-    private String _attachmentUuid;
-    private String _ownerName;
-    private String _nicName;
-    
-    public UpdateLogicalSwitchPortCommand(String logicalSwitchPortUuid, String logicalSwitchUuid, String attachmentUuid, String ownerName, String nicName) {
-        this._logicalSwitchUuid = logicalSwitchUuid;
-        this._logicalSwitchPortUuid = logicalSwitchPortUuid;
-        this._attachmentUuid = attachmentUuid;
-        this._ownerName = ownerName;
-        this._nicName = nicName;
-    }
-    
-    
-    public String getLogicalSwitchUuid() {
-        return _logicalSwitchUuid;
+    private final String logicalSwitchUuid;
+    private final String logicalSwitchPortUuid;
+    private final String attachmentUuid;
+    private final String ownerName;
+    private final String nicName;
+
+    public UpdateLogicalSwitchPortCommand(final String logicalSwitchPortUuid, final String logicalSwitchUuid, final String attachmentUuid, final String ownerName,
+            final String nicName) {
+        this.logicalSwitchUuid = logicalSwitchUuid;
+        this.logicalSwitchPortUuid = logicalSwitchPortUuid;
+        this.attachmentUuid = attachmentUuid;
+        this.ownerName = ownerName;
+        this.nicName = nicName;
     }
 
+    public String getLogicalSwitchUuid() {
+        return logicalSwitchUuid;
+    }
 
     public String getLogicalSwitchPortUuid() {
-        return _logicalSwitchPortUuid;
+        return logicalSwitchPortUuid;
     }
-
 
     public String getAttachmentUuid() {
-        return _attachmentUuid;
+        return attachmentUuid;
     }
-
 
     public String getOwnerName() {
-        return _ownerName;
+        return ownerName;
     }
-
 
     public String getNicName() {
-        return _nicName;
+        return nicName;
     }
-
 
     @Override
     public boolean executeInSequence() {
